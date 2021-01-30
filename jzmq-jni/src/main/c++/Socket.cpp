@@ -851,17 +851,21 @@ Java_org_zeromq_ZMQ_00024Socket_recvZeroCopy (JNIEnv *env,
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
     jbyte* buf = (jbyte*) env->GetDirectBufferAddress(buffer);
 
-    if(buf == NULL)
+    if (buf == NULL) {
+        syslog(LOG_CRIT, "recvZeroCopy: buffer failed to initialize");
         return -1;
+    }
 
     void* sock = get_socket (env, obj);
     int rc = zmq_recv(sock, buf, length, flags);
     if (rc > 0) {
+        syslog(LOG_CRIT, "recvZeroCopy: zmq_recv success");
         int newpos = rc > length ? length : rc;
         setByteBufferPosition(env, buffer, newpos);
     }
     if(rc == -1) {
         int err = zmq_errno();
+        syslog(LOG_CRIT, "recvZeroCopy: zmq_recv returned a -1 = %d", err);
         if(err != EAGAIN) {
             raise_exception (env, err);
             return 0;
@@ -869,6 +873,7 @@ Java_org_zeromq_ZMQ_00024Socket_recvZeroCopy (JNIEnv *env,
     }
     return rc;
 #else
+    syslog(LOG_CRIT, "recvZeroCopy: Too low of a ZMQ version");
     return -1;
 #endif
 } 
@@ -879,8 +884,10 @@ Java_org_zeromq_ZMQ_00024Socket_recvByteBuffer (JNIEnv *env, jobject obj, jobjec
 {
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3,0,0)
     jbyte *buf = (jbyte*) env->GetDirectBufferAddress(buffer);
-    if(buf == NULL)
+    if (buf == NULL) {
+        syslog(LOG_CRIT, "recvByteBuffer: buffer failed to initialize");
         return -1;
+    }
 
     void *sock = get_socket (env, obj);
 
@@ -890,12 +897,14 @@ Java_org_zeromq_ZMQ_00024Socket_recvByteBuffer (JNIEnv *env, jobject obj, jobjec
 
     int read = zmq_recv(sock, buf + pos, rem, flags);
     if (read > 0) {
+        syslog(LOG_CRIT, "recvByteBuffer: zmq_recv success");
         read = read > rem ? rem : read;
         env->CallObjectMethod(buffer, setPositionMID, read + pos);
         return read;
     }
     else if(read == -1) {
         int err = zmq_errno();
+        syslog(LOG_CRIT, "recvByteBuffer: zmq_recv returned a -1 = %d", err);
         if(err != EAGAIN) {
             raise_exception (env, err);
             return 0;
@@ -903,6 +912,7 @@ Java_org_zeromq_ZMQ_00024Socket_recvByteBuffer (JNIEnv *env, jobject obj, jobjec
     }
     return read;
 #else
+    syslog(LOG_CRIT, "recvByteBuffer: Too low of a ZMQ version");
     return JNI_FALSE;
 #endif
 }
