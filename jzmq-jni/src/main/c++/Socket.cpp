@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include <zmq.h>
+#include <syslog.h>
 
 #include "jzmq.hpp"
 #include "util.hpp"
@@ -605,6 +606,7 @@ JNIEXPORT void JNICALL Java_org_zeromq_ZMQ_00024Socket_disconnect (JNIEnv *env,
 /**
  * Called by Java's Socket::join(String group).
  */
+extern "C"
 JNIEXPORT void JNICALL Java_org_zeromq_ZMQ_00024Socket_join (JNIEnv *env,
                                                             jobject obj,
                                                             jstring group)
@@ -621,6 +623,13 @@ JNIEXPORT void JNICALL Java_org_zeromq_ZMQ_00024Socket_join (JNIEnv *env,
         raise_exception (env, EINVAL);
         return;
     }
+
+#ifdef ZMQ_BUILD_DRAFT_API
+    syslog(LOG_CRIT, "From join function: Drafts are enabled");
+#else
+    syslog(LOG_CRIT, "From join function: Drafts are NOT enabled");
+#endif // ZMQ_BUILD_DRAFT_API
+
 
     int rc = zmq_join (s, c_group);
     int err = zmq_errno();
