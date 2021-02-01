@@ -630,10 +630,13 @@ JNIEXPORT void JNICALL Java_org_zeromq_ZMQ_00024Socket_join (JNIEnv *env,
     syslog(LOG_CRIT, "From join function: Drafts are NOT enabled");
 #endif // ZMQ_BUILD_DRAFT_API
 
+    syslog(LOG_CRIT, "From join group function (group): %s", c_group);
 
     int rc = zmq_join (s, c_group);
     int err = zmq_errno();
     env->ReleaseStringUTFChars (group, c_group);
+
+    syslog(LOG_CRIT, "From join group function (outcome): %d", rc);
 
     if (rc != 0) {
         raise_exception (env, err);
@@ -661,10 +664,14 @@ JNIEXPORT void JNICALL Java_org_zeromq_ZMQ_00024Socket_leave (JNIEnv *env,
         raise_exception (env, EINVAL);
         return;
     }
+    
+    syslog(LOG_CRIT, "From leave group function (group): %s", c_group);
 
     int rc = zmq_leave (s, c_group);
     int err = zmq_errno();
     env->ReleaseStringUTFChars (group, c_group);
+
+    syslog(LOG_CRIT, "From leave group function (outcome): %d", rc);
 
     if (rc != 0) {
         raise_exception (env, err);
